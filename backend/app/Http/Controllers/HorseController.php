@@ -33,19 +33,12 @@ class HorseController extends Controller
 	public function create(CreateHorseRequest $request)
 	{
 		$horse = $this->horseRepository->store($request->all());
-
 		return $this->sendSuccess($horse, 201);
 	}
 
 	public function update(int $id, CreateHorseRequest $request)
 	{
 		$horse = $this->horseRepository->update($id, $request->all());
-
-		$logProperties = [
-			'redirection_id' => $id,
-			'updated_data' => $request->all()
-		];
-
 
 		return $this->sendSuccess($horse);
 	}

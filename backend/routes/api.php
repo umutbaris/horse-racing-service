@@ -22,3 +22,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
      * Horses
      */
     Route::get('/horses', 'HorseController@index');
+    Route::get('/horses/{id}', 'HorseController@show');
+    Route::post('/horses', 'HorseController@create');
+    Route::put('/horses/{id}', 'HorseController@update');
+    Route::delete('/horses/{id}', 'HorseController@destroy');
