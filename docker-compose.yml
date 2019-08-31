@@ -36,3 +36,5 @@ services:
       MYSQL_DATABASE: horse-race
     ports: 
       - 3306:3306
+    volumes:
+      - ./files/mysql_files:/var/lib/mysql:cached
