@@ -15,9 +15,9 @@ class CreateRacesTable extends Migration
 	{
 		Schema::create('races', function (Blueprint $table) {
 			$table->bigIncrements('id');
-			$table->integer('best_time');
-			$table->string('status');
-			$table->integer('current_time');
+			$table->integer('best_time')->nullable();
+			$table->string('status')->nullable();
+			$table->integer('current_time')->nullable();
 			$table->timestamps();
 		});
 	}

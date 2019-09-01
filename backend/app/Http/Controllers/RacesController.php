@@ -37,6 +37,9 @@ class RacesController extends Controller
 			$activeRaces = [];
 			foreach ($races as $race) {
 				if ($race->status === "ongoing"){
+					$race['horses'] = $this->raceRepository->find($race->id)->horses;
+					$race['horses'][0]->distance_covered = 2;
+					$race['horses'][0]->horse_position = 3;
 					array_push($activeRaces, $race);
 				}
 			}
@@ -51,16 +54,30 @@ class RacesController extends Controller
 			return $this->sendRaceInfo($race);
 		}
 	
+		/**
+		 * Checking active race count and determine horses
+		 *
+		 * @param CreateraceRequest $request
+		 * @return message
+		 */
 		public function create(CreateraceRequest $request)
 		{
-			$race = $this->raceRepository->store($request->all());
+			if ( 3 > $this->checkActiveRaceCount() ){
+				$request['current_time'] = 0;
+				$request['status'] = "ongoing";
+				$request['best_time'] = $this->raceRepository->getBestTime();
+				$race = $this->raceRepository->store($request->all());
+	
+				$maxHorseNumber = $this->horseRepository->getLastId();
+				$horses = $this->getHorsesRandomly($maxHorseNumber);
+				$racingHorses = $this->horseRepository->find($horses);
+				$race->horses()->attach($racingHorses);
+	
+				return $this->sendSuccess($race, 201);
+			} else {
+				return $this->sendError("There are already 3 races. You can't create new race. You should wait to finish any active race", 500);
+			}
 
-			$maxHorseNumber = $this->horseRepository->getLastId();
-			$horses = $this->getHorsesRandomly($maxHorseNumber);
-			$racingHorses = $this->horseRepository->find($horses);
-			$race->horses()->attach($racingHorses);
-
-			return $this->sendSuccess($race, 201);
 		}
 	
 		public function update(int $id, CreateraceRequest $request)
@@ -100,7 +117,6 @@ class RacesController extends Controller
 		 */
 		public function sendRaceInfo($race = [], $statusCode = 200)
 		{
-
 			return response()->json([
 				'success' => true,
 				'data' => $race,
@@ -109,6 +125,11 @@ class RacesController extends Controller
 			], $statusCode);
 		}
 
+		/**
+		 * Showing active races on progress endpoint
+		 *
+		 * @return void
+		 */
 		public function progress()
 		{
 			$races = $this->actives()->getData()->data;
@@ -117,6 +138,16 @@ class RacesController extends Controller
 			}
 
 			return $this->actives();
+		}
+
+		/**
+		 * Undocumented function
+		 *
+		 * @return integer
+		 */
+		public function checkActiveRaceCount(): int
+		{
+			return count($races = $this->actives()->getData()->data);
 		}
 
 }
