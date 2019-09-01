@@ -49,4 +49,9 @@ class BaseRepository {
 		$instance = $this->getNewInstance();
 		return $instance->latest()->first()->getKey();
 	}
+	
+	public function getBestTime() {
+		$instance = $this->getNewInstance();
+		return $instance->min('best_time');
+	}
 }

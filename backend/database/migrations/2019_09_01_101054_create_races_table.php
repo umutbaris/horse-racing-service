@@ -17,6 +17,7 @@ class CreateRacesTable extends Migration
 			$table->bigIncrements('id');
 			$table->integer('best_time');
 			$table->string('status');
+			$table->integer('current_time');
 			$table->timestamps();
 		});
 	}

@@ -31,7 +31,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
      * Races
      */
     Route::get('/races', 'RacesController@index');
+    Route::get('/active-races', 'RacesController@actives');
     Route::get('/races/{id}', 'RacesController@show');
     Route::post('/races', 'RacesController@create');
     Route::put('/races/{id}', 'RacesController@update');
     Route::delete('/races/{id}', 'RacesController@destroy');
+
+    Route::get('/progress', 'RacesController@progress');

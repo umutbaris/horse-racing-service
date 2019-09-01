@@ -9,6 +9,7 @@ $factory->define(Races::class, function (Faker $faker) {
 	return [
 		'best_time' => $faker->unixTime($max = 'now'),
 		'status' => 'Ongoing',
+		'current_time' => 0,
 		'created_at' => now(),
 		'updated_at' => now()
 	];
