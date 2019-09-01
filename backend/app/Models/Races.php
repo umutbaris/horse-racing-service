@@ -13,6 +13,6 @@ class Races extends Model
 	 */
 	public function horses()
 	{
-		return $this->belongsToMany(Horses::class);
+		return $this->belongsToMany(Horses::class, "horses_races", "race_id", "horse_id");
 	}
 }

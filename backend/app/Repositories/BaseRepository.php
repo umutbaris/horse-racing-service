@@ -44,4 +44,9 @@ class BaseRepository {
 			return $item->only($fields);
 		});
 	}
+
+	public function getLastid() {
+		$instance = $this->getNewInstance();
+		return $instance->latest()->first()->getKey();
+	}
 }

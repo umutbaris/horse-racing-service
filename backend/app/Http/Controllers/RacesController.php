@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 use App\Http\Requests\CreateRaceRequest;
 use App\Repositories\RaceRepository;
-use App\Modeks\Races;
+use App\Repositories\HorseRepository;
+use App\Models\Races;
+use App\Models\Horses;
 use Illuminate\Http\Request;
 
 class RacesController extends Controller
 {
 	protected $raceRepository;
 	
-		public function __construct(raceRepository $raceRepository)
+		public function __construct(raceRepository $raceRepository, HorseRepository $horseRepository)
 		{
 			$this->raceRepository = $raceRepository;
+			$this->horseRepository = $horseRepository;
 		}
 	
 		public function index()
@@ -32,6 +35,12 @@ class RacesController extends Controller
 		public function create(CreateraceRequest $request)
 		{
 			$race = $this->raceRepository->store($request->all());
+			
+			$maxHorseNumber = $this->horseRepository->getLastId();
+			$horses = $this->getHorsesRandomly($maxHorseNumber);
+			$racingHorses = $this->horseRepository->find($horses);
+			$race->horses()->attach($racingHorses);
+
 			return $this->sendSuccess($race, 201);
 		}
 	
@@ -47,5 +56,14 @@ class RacesController extends Controller
 			$race = $this->raceRepository->delete($id);
 	
 			return $this->sendSuccess($race, 204);
+		}
+
+		public function getHorsesRandomly($max)
+		{
+			$random = range(1, $max);
+			shuffle($random);
+			$randomHorses = array_slice($random ,0, 8);
+
+			return $randomHorses;
 		}
 }
