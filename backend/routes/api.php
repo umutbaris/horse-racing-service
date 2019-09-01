@@ -26,3 +26,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     Route::post('/horses', 'HorseController@create');
     Route::put('/horses/{id}', 'HorseController@update');
     Route::delete('/horses/{id}', 'HorseController@destroy');
+
+    /**
+     * Races
+     */
+    Route::get('/races', 'RacesController@index');
+    Route::get('/races/{id}', 'RacesController@show');
+    Route::post('/races', 'RacesController@create');
+    Route::put('/races/{id}', 'RacesController@update');
+    Route::delete('/races/{id}', 'RacesController@destroy');

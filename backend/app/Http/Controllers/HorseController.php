@@ -45,13 +45,8 @@ class HorseController extends Controller
 
 	public function destroy(int $id)
 	{
-		$customRedirection = $this->horseRepository->delete($id);
+		$horse = $this->horseRepository->delete($id);
 
-		$logProperties = [
-			'redirection_id' => $id
-		];
-
-
-		return $this->sendSuccess($customRedirection, 204);
+		return $this->sendSuccess($horse, 204);
 	}
 }
