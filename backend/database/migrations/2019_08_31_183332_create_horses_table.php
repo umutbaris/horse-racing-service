@@ -19,6 +19,9 @@ class CreateHorsesTable extends Migration
 			$table->integer('speed');
 			$table->integer('strength');
 			$table->integer('endurance');
+			$table->string('status');
+			$table->integer('position');
+			$table->integer('distance_covered');
 			$table->timestamps();
 		});
 	}

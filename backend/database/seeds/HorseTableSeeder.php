@@ -12,6 +12,6 @@ class HorsesTableSeeder extends Seeder
      */
     public function run()
     {
-        $horses = factory(Horses::class, 8)->create();
+        $horses = factory(Horses::class, 24)->create();
     }
 }

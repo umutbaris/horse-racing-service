@@ -24,28 +24,6 @@ class RacesController extends Controller
 
 			return $this->sendSuccess($races);
 		}
-
-		/**
-		 * Showing active races
-		 *
-		 * @return void
-		 */
-		public function actives()
-		{
-			$races = $this->raceRepository->all();
-
-			$activeRaces = [];
-			foreach ($races as $race) {
-				if ($race->status === "ongoing"){
-					$race['horses'] = $this->raceRepository->find($race->id)->horses;
-					$race['horses'][0]->distance_covered = 2;
-					$race['horses'][0]->horse_position = 3;
-					array_push($activeRaces, $race);
-				}
-			}
-
-			return $this->sendSuccess($activeRaces);
-		}
 	
 		public function show(int $id)
 		{
@@ -68,14 +46,14 @@ class RacesController extends Controller
 				$request['best_time'] = $this->raceRepository->getBestTime();
 				$race = $this->raceRepository->store($request->all());
 	
-				$maxHorseNumber = $this->horseRepository->getLastId();
-				$horses = $this->getHorsesRandomly($maxHorseNumber);
+				$freeHorses = $this->horseRepository->findby('status', 'free');
+				$horses = $this->getHorsesRandomly($freeHorses);
 				$racingHorses = $this->horseRepository->find($horses);
 				$race->horses()->attach($racingHorses);
 	
 				return $this->sendSuccess($race, 201);
 			} else {
-				return $this->sendError("There are already 3 races. You can't create new race. You should wait to finish any active race", 500);
+			 	return $this->sendError("There are already 3 races. You can't create new race. You should wait to finish any active race", 500);
 			}
 
 		}
@@ -99,11 +77,17 @@ class RacesController extends Controller
 		 * @param int $max
 		 * @return array
 		 */
-		public function getHorsesRandomly($max): array
+		public function getHorsesRandomly($freeHorses): array
 		{
-			$random = range(1, $max);
+			$freeHorsesIds = $this->horseRepository->onlyFields($freeHorses, "id");
+			$random = range(1, count($freeHorsesIds));
 			shuffle($random);
 			$randomHorses = array_slice($random ,0, 8);
+			foreach ($randomHorses as $randomHorse){
+				$this->horseRepository->update($randomHorse,['status' => 'run']);
+				
+			}
+
 
 			return $randomHorses;
 		}
@@ -126,6 +110,26 @@ class RacesController extends Controller
 		}
 
 		/**
+		 * Showing active races
+		 *
+		 * @return void
+		 */
+		public function actives()
+		{
+			$races = $this->raceRepository->all();
+			$activeRaces = [];
+			foreach ($races as $race) {
+				if ($race->status === "ongoing"){
+
+					$race['horses'] = $this->raceRepository->find($race->id)->horses;
+					array_push($activeRaces, $race);
+				}
+			}
+
+			return $this->sendSuccess($activeRaces);
+		}
+
+		/**
 		 * Showing active races on progress endpoint
 		 *
 		 * @return void
@@ -133,10 +137,14 @@ class RacesController extends Controller
 		public function progress()
 		{
 			$races = $this->actives()->getData()->data;
+			$horses = [];
 			foreach ($races as $race){
 				$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
+				$horse = $this->runToHorses($race->horses);
+				array_push($horses, $horse);
 			}
 
+			
 			return $this->actives();
 		}
 
@@ -148,6 +156,24 @@ class RacesController extends Controller
 		public function checkActiveRaceCount(): int
 		{
 			return count($races = $this->actives()->getData()->data);
+		}
+
+		public function runToHorses($horses)
+		{
+			
+			$oldDistance = 0;
+			$updatedHorses = [];
+			foreach($horses as $horse){
+				if(!empty($horse->distance_covered)){
+					$oldDistance = $horse->distance_covered;
+				}
+				$horse->distance_covered = $horse->speed * 10 + $oldDistance;
+				
+				array_push($updatedHorses, $horse);
+			}
+
+			return $updatedHorses;
+
 		}
 
 }
