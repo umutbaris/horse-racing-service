@@ -88,7 +88,6 @@ class RacesController extends Controller
 				
 			}
 
-
 			return $randomHorses;
 		}
 
@@ -137,11 +136,9 @@ class RacesController extends Controller
 		public function progress()
 		{
 			$races = $this->actives()->getData()->data;
-			$horses = [];
 			foreach ($races as $race){
 				$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
 				$horse = $this->runToHorses($race->horses);
-				array_push($horses, $horse);
 			}
 
 			
@@ -149,7 +146,38 @@ class RacesController extends Controller
 		}
 
 		/**
-		 * Undocumented function
+		 * Calculating running meters for each progress and updating distance covered
+		 *
+		 * @param array horses
+		 * @return void
+		 */
+		public function runToHorses($horses)
+		{
+			foreach($horses as $horse){
+				$horse->distance_covered = $horse->speed * 10 + $horse->distance_covered;
+				$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
+			}
+			$this->determineHorsePosition($horses);
+			
+		}
+
+		/**
+		 * Calculating position according to distance covered and updating position
+		 *
+		 * @param [type] $horses
+		 * @return void
+		 */
+		public function determineHorsePosition($horses)
+		{
+			array_multisort(array_column($horses, 'distance_covered'), SORT_DESC, $horses);
+
+			foreach($horses as $key=>$horse){
+				$this->horseRepository->update($horse->id,['position' => $key+1]);
+			}
+		}
+
+		/**
+		 * Checking active race count
 		 *
 		 * @return integer
 		 */
@@ -158,22 +186,6 @@ class RacesController extends Controller
 			return count($races = $this->actives()->getData()->data);
 		}
 
-		public function runToHorses($horses)
-		{
-			
-			$oldDistance = 0;
-			$updatedHorses = [];
-			foreach($horses as $horse){
-				if(!empty($horse->distance_covered)){
-					$oldDistance = $horse->distance_covered;
-				}
-				$horse->distance_covered = $horse->speed * 10 + $oldDistance;
-				
-				array_push($updatedHorses, $horse);
-			}
 
-			return $updatedHorses;
-
-		}
 
 }
