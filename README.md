@@ -28,6 +28,9 @@ Implementig a horse racing simulator with PHP and a relational database.
 * DB Seed to generate content for horses table randomly
 
   `php artisan db:seed --class=HorsesTableSeeder`
+  
+   This command create 24 horses. Because we need minimum 24 horses for 3 races.
+
 
 ## Hints
 
