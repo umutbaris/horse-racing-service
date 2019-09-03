@@ -42,6 +42,7 @@ class RacesController extends Controller
 		{
 			if ( 3 > $this->checkActiveRaceCount() ){
 				$request['current_time'] = 0;
+				$request['completed_horse_count'] = 0;
 				$request['status'] = "ongoing";
 				$request['best_time'] = $this->raceRepository->getBestTime();
 				$race = $this->raceRepository->store($request->all());
@@ -138,10 +139,8 @@ class RacesController extends Controller
 			$races = $this->actives()->getData()->data;
 			foreach ($races as $race){
 				$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
-				$horse = $this->runToHorses($race->horses);
+				$this->runToHorses($race);
 			}
-
-			
 			return $this->actives();
 		}
 
@@ -151,14 +150,21 @@ class RacesController extends Controller
 		 * @param array horses
 		 * @return void
 		 */
-		public function runToHorses($horses)
+		public function runToHorses($race)
 		{
+			$horses = $race->horses;
 			foreach($horses as $horse){
-				$horse->distance_covered = $horse->speed * 10 + $horse->distance_covered;
+				$speed = $this->getSlowedSpeed($horse);
+				if (empty($speed)){
+					$speed = $horse->speed;
+				}
+				$horse->distance_covered = $speed * 10 + $horse->distance_covered;
 				$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
+				if ($race->current_time >= 180){
+					$this->checkIsHorseFinishedRace($horse, $race->id);
+				}
 			}
 			$this->determineHorsePosition($horses);
-			
 		}
 
 		/**
@@ -187,5 +193,23 @@ class RacesController extends Controller
 		}
 
 
+		public function getSlowedSpeed($horse)
+		{
+			$slowedMeter = $horse->endurance * 100;
+			if ($horse->distance_covered >= $slowedMeter){ 
+				$slowedPercentage = $horse->strength * 8 / 100;
+				$horse->speed = $horse->speed - (5 - $slowedPercentage);
+				return $horse->speed;
+			} else {
+				return null;
+			}
+		}
+
+		public function checkIsHorseFinishedRace($horse, $raceId)
+		{
+			if ($horse->distance_covered >= 1500) {
+				$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
+			}
+		}
 
 }
