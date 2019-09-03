@@ -154,16 +154,18 @@ class RacesController extends Controller
 		{
 			$horses = $race->horses;
 			foreach($horses as $horse){
-				$speed = $this->getSlowedSpeed($horse);
-				if (empty($speed)){
-					$speed = $horse->speed;
+				if($horse->status === 'run'){
+					$speed = $this->getSlowedSpeed($horse);
+					if (empty($speed)){
+						$speed = $horse->speed;
+					}
+					$horse->distance_covered = $speed * 10 + $horse->distance_covered;
+					$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
 				}
-				$horse->distance_covered = $speed * 10 + $horse->distance_covered;
-				$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
-				if ($race->current_time >= 180){
-					$this->checkIsHorseFinishedRace($horse, $race->id);
-				}
+
+				$this->checkIsHorseFinishedRace($horse, $race);
 			}
+
 			$this->determineHorsePosition($horses);
 		}
 
@@ -175,10 +177,14 @@ class RacesController extends Controller
 		 */
 		public function determineHorsePosition($horses)
 		{
-			array_multisort(array_column($horses, 'distance_covered'), SORT_DESC, $horses);
-
+			array_multisort(array_column($horses, 'distance_covered'), SORT_ASC, $horses);
+			$count = 0;
 			foreach($horses as $key=>$horse){
-				$this->horseRepository->update($horse->id,['position' => $key+1]);
+				if($horse->status === 'run'){
+					$this->horseRepository->update($horse->id,['position' => 8 - $count]);
+					$count++;
+				}
+
 			}
 		}
 
@@ -205,10 +211,14 @@ class RacesController extends Controller
 			}
 		}
 
-		public function checkIsHorseFinishedRace($horse, $raceId)
+		public function checkIsHorseFinishedRace($horse, $race)
 		{
-			if ($horse->distance_covered >= 1500) {
+			if ($race->current_time >= 180 && $horse->distance_covered >= 1500 && $horse->status === 'run') {
 				$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
+				$this->raceRepository->update($race->id,['completed_horse_count' => $race->completed_horse_count + 1]);
+				if($race->completed_horse_count === 8){
+					$this->raceRepository->update($race->id,['status' => 'Finished']);
+				}
 			}
 		}
 
