@@ -155,7 +155,7 @@ class RacesController extends Controller
 			$horses = $race->horses;
 			foreach($horses as $horse){
 				if($horse->status === 'run'){
-					$horse->distance_covered = $this->getDistanceCovered($horse, $race->current_time);
+					$horse->distance_covered = $this->getDistanceCovered($horse, $race->current_time + 10);
 					$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
 				}
 
@@ -203,7 +203,7 @@ class RacesController extends Controller
 				$slowTime = $currentTime - $fastTime;
 				$fullSpeedDistance = $fastTime * $horse->speed;
 				$slowedPercentage = $horse->strength * 8 / 100;
-				$horse->speed = $horse->speed - (5 - $slowedPercentage);
+				$horse->speed = $horse->speed - (5 - 5 * $slowedPercentage);
 				$slowSpeedDistance = $slowTime * $horse->speed;
 
 				return $fullSpeedDistance + $slowSpeedDistance;
@@ -223,5 +223,4 @@ class RacesController extends Controller
 				}
 			}
 		}
-
 }
