@@ -43,9 +43,14 @@ There are 4 important folders whiche have include implementations in application
 
   `backend/app/Http/Controllers`
 
-* Repostories
+* Repositories
 
   `backend/app/Repositories`
+  
+
+* Services
+
+  `backend/app/Services`
 
 * Routes 
 
