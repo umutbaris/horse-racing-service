@@ -22,7 +22,10 @@ class BaseRepository {
 		return $instance;
 	}
 	public function update($id, $data) {
-		$instance = $this->find($id);
+        $instance = $this->find($id);
+        if (empty($instance)) {
+            return null;
+        }
 		$instance->fill($data);
 		$instance->save();
 		return $instance;
@@ -31,9 +34,9 @@ class BaseRepository {
 		$instance = $this->find($id);
 		$instance->delete();
 	}
-	public function findBy($field, $value) {
+	public function findBy($field, $value, $relations = []) {
 		$instance = $this->getNewInstance();
-		return $instance->where($field, $value)->get();
+		return $instance->where($field, $value)->with($relations)->get();
 	}
 	public function getNewInstance() {
 		$model = $this->modelName;
