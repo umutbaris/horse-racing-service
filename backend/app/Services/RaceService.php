@@ -27,7 +27,6 @@ class RaceService
 		$randomHorses = array_slice($random ,0, 8);
 		foreach ($randomHorses as $randomHorse){
 			$this->horseRepository->update($randomHorse,['status' => 'run']);
-			
 		}
 
 		return $randomHorses;
@@ -47,7 +46,6 @@ class RaceService
 				$horse->distance_covered = $this->getDistanceCovered($horse, $race->current_time + 10);
 				$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
 			}
-
 			$this->checkIsHorseFinishedRace($horse, $race);
 		}
 
@@ -83,6 +81,7 @@ class RaceService
 			$slowedPercentage = $horse->strength * 8 / 100;
 			$horse->speed = $horse->speed - (5 - 5 * $slowedPercentage);
 			$slowSpeedDistance = $slowTime * $horse->speed;
+			$this->horseRepository->update($horse->id,['slow_speed' => $horse->speed]);
 
 			return $fullSpeedDistance + $slowSpeedDistance;
 
@@ -93,10 +92,18 @@ class RaceService
 
 	public function checkIsHorseFinishedRace($horse, $race)
 	{
-		if ($race->current_time >= 180 && $horse->distance_covered >= 1500 && $horse->status === 'run') {
+		if ($race->current_time >= 150 && $horse->distance_covered >= 1500 && $horse->status === 'run') {
+			$this->horseRepository->update($horse->id,['distance_covered' => 1500]);
 			$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
 			$this->raceRepository->update($race->id,['completed_horse_count' => $race->completed_horse_count + 1]);
-			if($race->completed_horse_count === 8){
+
+			$extraDistance = 1500 - $horse->distance_covered;
+			$extraTime = $extraDistance / $horse->slow_speed;
+
+			if ($horse->position === 1){
+				$this->raceRepository->update($race->id,['best_time' => $race->current_time - $extraTime]);
+			}
+			if(count($this->horseRepository->findBy('status', 'Completed Race')) === 8){
 				$this->raceRepository->update($race->id,['status' => 'Finished']);
 			}
 		}

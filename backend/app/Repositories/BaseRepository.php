@@ -22,10 +22,10 @@ class BaseRepository {
 		return $instance;
 	}
 	public function update($id, $data) {
-        $instance = $this->find($id);
-        if (empty($instance)) {
-            return null;
-        }
+		$instance = $this->find($id);
+		if (empty($instance)) {
+			return null;
+		}
 		$instance->fill($data);
 		$instance->save();
 		return $instance;

@@ -13,6 +13,7 @@ $factory->define(Horses::class, function (Faker $faker) {
         'endurance' => $faker->numberBetween($min = 1, $max = 10),
         'status' => "free",
         'position' => 0,
-        'distance_covered' => 0
+        'distance_covered' => 0,
+        'slow_speed' => 0
     ];
 });
