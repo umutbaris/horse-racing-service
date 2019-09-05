@@ -49,6 +49,9 @@ class RacesController extends Controller
 			$request['current_time'] = 0;
 			$request['completed_horse_count'] = 0;
 			$request['status'] = "ongoing";
+			if(!empty([$request['race_meter']])){
+				$request['race_meter'] = 1500;
+			}
 			$request['best_time'] = $this->raceRepository->getBestTime();
 			$race = $this->raceRepository->store($request->all());
 
@@ -114,6 +117,7 @@ class RacesController extends Controller
 	{
 		$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
 		$races = $this->actives()->getData()->data;
+		$this->raceService->getLastFiveResult();
 		foreach ($races as $race){
 			$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
 			$this->raceService->runToHorses($race);

@@ -19,6 +19,7 @@ class CreateRacesTable extends Migration
 			$table->string('status')->nullable();
 			$table->integer('current_time')->nullable();
 			$table->integer('completed_horse_count')->nullable();
+			$table->integer('race_meter')->nullable();
 			$table->timestamps();
 		});
 	}

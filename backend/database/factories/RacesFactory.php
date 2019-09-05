@@ -11,6 +11,7 @@ $factory->define(Races::class, function (Faker $faker) {
 		'status' => 'Ongoing',
 		'current_time' => 0,
 		'completed_horse_count' => 0,
+		'race_meter' => 0,
 		'created_at' => now(),
 		'updated_at' => now()
 	];

@@ -55,6 +55,13 @@ class BaseRepository {
 	
 	public function getBestTime() {
 		$instance = $this->getNewInstance();
-		return $instance->min('best_time');
+		return $instance->where('status', 'Finished')->min('best_time');
 	}
+
+	public function getLastRecords($n)
+	{
+		$instance = $this->getNewInstance();
+		return $instance->orderBy('id', 'desc')->take($n)->get();
+	}
+
 }
