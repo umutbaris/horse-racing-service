@@ -8,6 +8,8 @@ use App\Models\Races;
 use App\Models\Horses;
 use Illuminate\Http\Request;
 
+use App\Http\Services\RaceService;
+
 class RacesController extends Controller
 {
 	protected $raceRepository;
@@ -15,7 +17,7 @@ class RacesController extends Controller
 		public function __construct(raceRepository $raceRepository, HorseRepository $horseRepository)
 		{
 			$this->raceRepository = $raceRepository;
-			$this->horseRepository = $horseRepository;
+			$this->horseRepository = $horseRepository;			
 		}
 	
 		public function index()
@@ -40,7 +42,8 @@ class RacesController extends Controller
 		 */
 		public function create(CreateraceRequest $request)
 		{
-			if ( 3 > $this->checkActiveRaceCount() ){
+			$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
+			if ( 3 > $this->raceService->checkActiveRaceCount() ){
 				$request['current_time'] = 0;
 				$request['completed_horse_count'] = 0;
 				$request['status'] = "ongoing";
@@ -48,7 +51,9 @@ class RacesController extends Controller
 				$race = $this->raceRepository->store($request->all());
 	
 				$freeHorses = $this->horseRepository->findby('status', 'free');
-				$horses = $this->getHorsesRandomly($freeHorses);
+				$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
+				$horses = $this->raceService->getHorsesRandomly($freeHorses);
+				
 				$racingHorses = $this->horseRepository->find($horses);
 				$race->horses()->attach($racingHorses);
 	
@@ -56,7 +61,6 @@ class RacesController extends Controller
 			} else {
 			 	return $this->sendError("There are already 3 races. You can't create new race. You should wait to finish any active race", 500);
 			}
-
 		}
 	
 		public function update(int $id, CreateraceRequest $request)
@@ -71,27 +75,6 @@ class RacesController extends Controller
 	
 			return $this->sendSuccess($race, 204);
 		}
-
-		/**
-		 * Generate numbers randomly between 1 to max horse number
-		 *
-		 * @param int $max
-		 * @return array
-		 */
-		public function getHorsesRandomly($freeHorses): array
-		{
-			$freeHorsesIds = $this->horseRepository->onlyFields($freeHorses, "id");
-			$random = range(1, count($freeHorsesIds));
-			shuffle($random);
-			$randomHorses = array_slice($random ,0, 8);
-			foreach ($randomHorses as $randomHorse){
-				$this->horseRepository->update($randomHorse,['status' => 'run']);
-				
-			}
-
-			return $randomHorses;
-		}
-
 		/**
 		 * Creating race informations
 		 *
@@ -120,7 +103,6 @@ class RacesController extends Controller
 			$activeRaces = [];
 			foreach ($races as $race) {
 				if ($race->status === "ongoing"){
-
 					$race['horses'] = $this->raceRepository->find($race->id)->horses;
 					array_push($activeRaces, $race);
 				}
@@ -136,91 +118,12 @@ class RacesController extends Controller
 		 */
 		public function progress()
 		{
+			$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
 			$races = $this->actives()->getData()->data;
 			foreach ($races as $race){
 				$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
-				$this->runToHorses($race);
+				$this->raceService->runToHorses($race);
 			}
 			return $this->actives();
-		}
-
-		/**
-		 * Calculating running meters for each progress and updating distance covered
-		 *
-		 * @param array horses
-		 * @return void
-		 */
-		public function runToHorses($race)
-		{
-			$horses = $race->horses;
-			foreach($horses as $horse){
-				if($horse->status === 'run'){
-					$horse->distance_covered = $this->getDistanceCovered($horse, $race->current_time + 10);
-					$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
-				}
-
-				$this->checkIsHorseFinishedRace($horse, $race);
-			}
-
-			$this->determineHorsePosition($horses);
-		}
-
-		/**
-		 * Calculating position according to distance covered and updating position
-		 *
-		 * @param [type] $horses
-		 * @return void
-		 */
-		public function determineHorsePosition($horses)
-		{
-			array_multisort(array_column($horses, 'distance_covered'), SORT_ASC, $horses);
-			$count = 0;
-			foreach($horses as $key=>$horse){
-				if($horse->status === 'run'){
-					$this->horseRepository->update($horse->id,['position' => count($horses) - $count]);
-					$count++;
-				}
-
-			}
-		}
-
-		/**
-		 * Checking active race count
-		 *
-		 * @return integer
-		 */
-		public function checkActiveRaceCount(): int
-		{
-			return count($races = $this->actives()->getData()->data);
-		}
-
-
-		public function getDistanceCovered($horse, $currentTime)
-		{
-			$slowedMeter = $horse->endurance * 100;
-			$fastTime = $slowedMeter / $horse->speed;
-			if($currentTime > $fastTime){
-				$slowTime = $currentTime - $fastTime;
-				$fullSpeedDistance = $fastTime * $horse->speed;
-				$slowedPercentage = $horse->strength * 8 / 100;
-				$horse->speed = $horse->speed - (5 - 5 * $slowedPercentage);
-				$slowSpeedDistance = $slowTime * $horse->speed;
-
-				return $fullSpeedDistance + $slowSpeedDistance;
-
-			} else {
-				return $horse->distance_covered = $horse->speed * $currentTime;
-			}
-		}
-
-		public function checkIsHorseFinishedRace($horse, $race)
-		{
-			if ($race->current_time >= 180 && $horse->distance_covered >= 1500 && $horse->status === 'run') {
-				$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
-				$this->raceRepository->update($race->id,['completed_horse_count' => $race->completed_horse_count + 1]);
-				if($race->completed_horse_count === 8){
-					$this->raceRepository->update($race->id,['status' => 'Finished']);
-				}
-			}
 		}
 }
