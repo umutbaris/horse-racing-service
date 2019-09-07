@@ -21,7 +21,7 @@ Implementig a horse racing simulator with PHP and a relational database.
 
   `docker exec -it fpm bash`
 
-* Maker migration to create database and tables. 
+* Make migration to create database and tables. 
 
   `php artisan migrate`
 
@@ -29,7 +29,7 @@ Implementig a horse racing simulator with PHP and a relational database.
 
   `php artisan db:seed --class=HorsesTableSeeder`
   
-   This command create 24 horses. Because we need minimum 24 horses for 3 races.
+   This command create 24 horses for each running. Because we need minimum 24 horses for 3 races. 
 
 
 ## Hints
@@ -61,6 +61,10 @@ There are 3 important folders in database layer under the `backend/database` fol
   * factories
   * migrations
   * seeds
+  
+  ## DB Schema
+  ![db_schema](https://github.com/umutbariskarasar/horse-racing-service/blob/master/horse-race-schema.png)
+
 
 
 
