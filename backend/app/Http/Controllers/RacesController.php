@@ -48,18 +48,17 @@ class RacesController extends Controller
 		if ( 3 > $this->checkActiveRaceCount() ){
 			$request['current_time'] = 0;
 			$request['status'] = "ongoing";
+			$request['finished_time'] = '0';
 			if(!empty([$request['race_meter']])){
 				$request['race_meter'] = 1500;
 			}
 			$request['best_time'] = $this->raceRepository->getBestTime();
 			$race = $this->raceRepository->store($request->all());
 
-			$freeHorses = $this->horseRepository->findby('status', 'free');
+			$freeHorses = $this->horseRepository->findby('status', 'free')->random(8);
 			$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
 			$horses = $this->raceService->getHorsesRandomly($freeHorses);
-			
-			$racingHorses = $this->horseRepository->find($horses);
-			$race->horses()->attach($racingHorses);
+			$race->horses()->attach($horses);
 
 			return $this->sendSuccess($race, 201);
 		} else {

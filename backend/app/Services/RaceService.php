@@ -19,17 +19,13 @@ class RaceService
 	 * @param int $max
 	 * @return array
 	 */
-	public function getHorsesRandomly($freeHorses): array
+	public function getHorsesRandomly($freeHorses)
 	{
-		$freeHorsesIds = $this->horseRepository->onlyFields($freeHorses, "id");
-		$random = range(1, count($freeHorsesIds));
-		shuffle($random);
-		$randomHorses = array_slice($random ,0, 8);
-		foreach ($randomHorses as $randomHorse){
-			$this->horseRepository->update($randomHorse,['status' => 'run']);
+		foreach ($freeHorses as $randomHorse){
+			$this->horseRepository->update($randomHorse->id,['status' => 'run']);
 		}
 
-		return $randomHorses;
+		return $freeHorses;
 	}
 
 	/**
@@ -47,9 +43,11 @@ class RaceService
 				$this->horseRepository->update($horse->id,['distance_covered' => $horse->distance_covered]);
 			}
 			$this->checkIsHorseFinishedRace($horse, $race);
+			$this->checkIsRaceFinished($race);
 		}
-
-		$this->determineHorsePosition($horses);
+		if($race->status === 'ongoing'){
+			$this->determineHorsePosition($horses);
+		}
 	}
 
 	/**
@@ -103,15 +101,15 @@ class RaceService
 			$this->horseRepository->update($horse->id,['distance_covered' => $race->race_meter]);
 			$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
 
-			$extraDistance =  $race->race_meter - $horse->distance_covered;
-			$extraTime = $extraDistance / $horse->slow_speed;
+			$extraDistance = $race->race_meter - $horse->distance_covered;
+			$extraTime = $extraDistance / $horse->slow_speed;	
+			$this->horseRepository->update($horse->id,['finished_time' => $race->current_time - $extraTime]);
+			
 
 			if ($horse->position === 1){
 				$this->raceRepository->update($race->id,['best_time' => $race->current_time - $extraTime]);
 			}
 		}
-
-		$this->checkIsRaceFinished($race);
 	}
 
 	public function checkIsRaceFinished($race)
@@ -134,16 +132,17 @@ class RaceService
 	{
 		$finishedRaces = $this->raceRepository->findByLastNelements("status", "Finished", 5, ['horses']);
 		$topHorses = [];
+		
 		foreach($finishedRaces as $finishedRace){
 			$sortedHorses = $finishedRace->horses->sortBy('position');
 			$topThreeHorses = $sortedHorses->slice(0, 3);
 			$lastRaces = [
 				'race' => $finishedRace->id,
-				'topThreeHorses' => $topThreeHorses
+				'topThreeHorses' => $topThreeHorses->sortBy('position')
 			];
+
 			array_push($topHorses, $lastRaces);
 		}
-
 		return $topHorses;
 	}
 }

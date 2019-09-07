@@ -22,6 +22,7 @@ class CreateHorsesTable extends Migration
 			$table->string('status');
 			$table->integer('position');
 			$table->float('distance_covered');
+			$table->float('finished_time');
 			$table->float('slow_speed');
 			$table->timestamps();
 		});

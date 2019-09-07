@@ -14,6 +14,7 @@ $factory->define(Horses::class, function (Faker $faker) {
         'status' => "free",
         'position' => 0,
         'distance_covered' => 0,
+        'finished_time' => 0,
         'slow_speed' => 0
     ];
 });
