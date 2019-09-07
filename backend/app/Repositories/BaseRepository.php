@@ -38,6 +38,11 @@ class BaseRepository {
 		$instance = $this->getNewInstance();
 		return $instance->where($field, $value)->with($relations)->get();
 	}
+	
+	public function findByLastNelements($field, $value, $n, $relations = []) {
+		$instance = $this->getNewInstance();
+		return $instance->where($field, $value)->orderBy('id', 'desc')->take(5)->get();
+	}
 	public function getNewInstance() {
 		$model = $this->modelName;
 		return new $model;

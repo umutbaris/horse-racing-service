@@ -47,7 +47,6 @@ class RacesController extends Controller
 		$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
 		if ( 3 > $this->checkActiveRaceCount() ){
 			$request['current_time'] = 0;
-			$request['completed_horse_count'] = 0;
 			$request['status'] = "ongoing";
 			if(!empty([$request['race_meter']])){
 				$request['race_meter'] = 1500;
@@ -70,14 +69,13 @@ class RacesController extends Controller
 
 	public function update(int $id, CreateraceRequest $request)
 	{
-			$race = $this->raceRepository->update($id, $request->all());
-			return $this->sendSuccess($race);
+		$race = $this->raceRepository->update($id, $request->all());
+		return $this->sendSuccess($race);
 	}
 
 	public function destroy(int $id)
 	{
 		$race = $this->raceRepository->delete($id);
-
 		return $this->sendSuccess($race, 204);
 	}
 	/**
@@ -105,6 +103,10 @@ class RacesController extends Controller
 	public function actives()
 	{
 		$races = $this->raceRepository->findBy('status', 'ongoing', ['horses']);
+		$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
+		foreach($races as $race){
+			$race['lastFiveResult'] = $this->raceService->getLastFiveResult();
+		}
 		return $this->sendSuccess($races);
 	}
 
@@ -122,6 +124,7 @@ class RacesController extends Controller
 			$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
 			$this->raceService->runToHorses($race);
 		}
+
 		return $this->actives();
 	}
 

@@ -71,6 +71,13 @@ class RaceService
 		}
 	}
 
+	/**
+	 * Calculating distance covered with high speed and slow speed
+	 *
+	 * @param array $horse
+	 * @param int $currentTime
+	 * @return int
+	 */
 	public function getDistanceCovered($horse, $currentTime)
 	{
 		$slowedMeter = $horse->endurance * 100;
@@ -92,20 +99,51 @@ class RaceService
 
 	public function checkIsHorseFinishedRace($horse, $race)
 	{
-		if ($race->current_time >= 150 && $horse->distance_covered >= 1500 && $horse->status === 'run') {
-			$this->horseRepository->update($horse->id,['distance_covered' => 1500]);
+		if ($race->current_time >=  $race->race_meter / 10 && $horse->distance_covered >= $race->race_meter && $horse->status === 'run') {
+			$this->horseRepository->update($horse->id,['distance_covered' => $race->race_meter]);
 			$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
-			$this->raceRepository->update($race->id,['completed_horse_count' => $race->completed_horse_count + 1]);
 
-			$extraDistance = 1500 - $horse->distance_covered;
+			$extraDistance =  $race->race_meter - $horse->distance_covered;
 			$extraTime = $extraDistance / $horse->slow_speed;
 
 			if ($horse->position === 1){
 				$this->raceRepository->update($race->id,['best_time' => $race->current_time - $extraTime]);
 			}
-			if(count($this->horseRepository->findBy('status', 'Completed Race')) === 8){
-				$this->raceRepository->update($race->id,['status' => 'Finished']);
+		}
+
+		$this->checkIsRaceFinished($race);
+	}
+
+	public function checkIsRaceFinished($race)
+	{
+		$statuses = array_column($race->horses, 'status');
+		$finishedHorsecount = 0;
+		foreach($statuses as $status){
+			if($status === 'Completed Race'){
+				$finishedHorsecount++;
 			}
 		}
+
+		if($finishedHorsecount === 8){
+			$this->raceRepository->update($race->id,['status' => 'Finished']);
+		}
+	}
+
+
+	public function getLastFiveResult()
+	{
+		$finishedRaces = $this->raceRepository->findByLastNelements("status", "Finished", 5, ['horses']);
+		$topHorses = [];
+		foreach($finishedRaces as $finishedRace){
+			$sortedHorses = $finishedRace->horses->sortBy('position');
+			$topThreeHorses = $sortedHorses->slice(0, 3);
+			$lastRaces = [
+				'race' => $finishedRace->id,
+				'topThreeHorses' => $topThreeHorses
+			];
+			array_push($topHorses, $lastRaces);
+		}
+
+		return $topHorses;
 	}
 }
