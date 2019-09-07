@@ -61,6 +61,9 @@ There are 3 important folders in database layer under the `backend/database` fol
   * factories
   * migrations
   * seeds
+  
+  ![db_schema](https://github.com/umutbariskarasar/horse-racing-service/blob/master/horse-race-schema.png)
+
 
 
 
