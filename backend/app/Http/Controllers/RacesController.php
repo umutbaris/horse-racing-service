@@ -19,7 +19,7 @@ class RacesController extends Controller
 	{
 		$this->raceRepository = $raceRepository;
 		$this->horseRepository = $horseRepository;
-		$this->raceService = $raceService;
+		$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
 	}
 
 	public function index()
@@ -42,8 +42,7 @@ class RacesController extends Controller
 	 */
 	public function create(CreateraceRequest $request)
 	{
-		$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
-		if ( 3 > $this->checkActiveRaceCount() ){
+		if (3 > count($this->actives()->getData()->data)){
 			$request['current_time'] = 0;
 			$request['status'] = "ongoing";
 			$request['finished_time'] = '0';
@@ -53,9 +52,7 @@ class RacesController extends Controller
 			$request['best_time'] = $this->raceRepository->getBestTime();
 			$race = $this->raceRepository->store($request->all());
 
-			$freeHorses = $this->horseRepository->findby('status', 'free')->random(8);
-			$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
-			$horses = $this->raceService->getHorsesRandomly($freeHorses);
+			$horses = $this->raceService->getHorsesRandomly();
 			$race->horses()->attach($horses);
 
 			return $this->sendSuccess($race, 201);
@@ -84,23 +81,22 @@ class RacesController extends Controller
 	public function actives()
 	{
 		$races = $this->raceRepository->findBy('status', 'ongoing', ['horses']);
-		$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
 		foreach($races as $race){
-			$race['lastFiveResult'] = $this->raceService->getLastFiveResult();
+			$race['lastFiveResult'] = $this->raceService->getLastFiveResults();
 		}
+
 		return $this->sendSuccess($races);
 	}
 
 	/**
-	 * Showing active races on progress endpoint
+	 * Tirgger progress process and return uppdated data
 	 *
 	 * @return void
 	 */
 	public function progress()
 	{
-		$this->raceService = new RaceService($this->raceRepository, $this->horseRepository);
 		$races = $this->actives()->getData()->data;
-		$this->raceService->getLastFiveResult();
+		$this->raceService->getLastFiveResults();
 		foreach ($races as $race){
 			$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
 			$this->raceService->runToHorses($race);
@@ -108,15 +104,4 @@ class RacesController extends Controller
 
 		return $this->actives();
 	}
-
-	/**
-	 * Checking active race count
-	 *
-	 * @return integer
-	 */
-	public function checkActiveRaceCount(): int
-	{
-		return count($races = $this->actives()->getData()->data);
-	}
-
 }

@@ -19,8 +19,9 @@ class RaceService
 	 * @param int $max
 	 * @return array
 	 */
-	public function getHorsesRandomly($freeHorses)
+	public function getHorsesRandomly()
 	{
+		$freeHorses = $this->horseRepository->findby('status', 'free')->random(8);
 		foreach ($freeHorses as $randomHorse){
 			$this->horseRepository->update($randomHorse->id,['status' => 'run']);
 		}
@@ -128,11 +129,11 @@ class RaceService
 	}
 
 
-	public function getLastFiveResult()
+	public function getLastFiveResults()
 	{
 		$finishedRaces = $this->raceRepository->findByLastNelements("status", "Finished", 5, ['horses']);
 		$topHorses = [];
-		
+
 		foreach($finishedRaces as $finishedRace){
 			$sortedHorses = $finishedRace->horses->sortBy('position');
 			$topThreeHorses = $sortedHorses->slice(0, 3);
@@ -143,6 +144,7 @@ class RaceService
 
 			array_push($topHorses, $lastRaces);
 		}
+
 		return $topHorses;
 	}
 }
