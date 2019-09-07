@@ -30,7 +30,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     /**
      * Races
      */
-    Route::get('/races', 'RacesController@index');
+    Route::get('/all-races', 'RacesController@index');
     Route::get('/active-races', 'RacesController@actives');
     Route::get('/races/{id}', 'RacesController@show');
     Route::post('/races', 'RacesController@create');

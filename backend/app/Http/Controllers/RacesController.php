@@ -24,16 +24,14 @@ class RacesController extends Controller
 
 	public function index()
 	{
-		$races = $this->raceRepository->all();
-
+		$races = $this->raceRepository->all('horses');
 		return $this->sendSuccess($races);
 	}
 
 	public function show(int $id)
 	{
-		$race = $this->raceRepository->find($id);
-
-		return $this->sendRaceInfo($race);
+		$race = $this->raceRepository->find($id, 'horses');
+		return $this->sendSuccess($race);
 	}
 
 	/**
@@ -76,22 +74,6 @@ class RacesController extends Controller
 	{
 		$race = $this->raceRepository->delete($id);
 		return $this->sendSuccess($race, 204);
-	}
-	/**
-	 * Creating race informations
-	 *
-	 * @param array $data
-	 * @param integer $statusCode
-	 * @return json
-	 */
-	public function sendRaceInfo($race = [], $statusCode = 200)
-	{
-		return response()->json([
-			'success' => true,
-			'data' => $race,
-			'best_ever_time' => $this->raceRepository->getBestTime(),
-			'horses' => $race->horses
-		], $statusCode);
 	}
 
 	/**
