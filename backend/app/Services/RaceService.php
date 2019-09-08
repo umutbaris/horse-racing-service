@@ -84,11 +84,8 @@ class RaceService
 		if($currentTime > $fastTime){
 			$slowTime = $currentTime - $fastTime;
 			$fullSpeedDistance = $fastTime * $horse->speed;
-			$slowedPercentage = $horse->strength * 8 / 100;
-			$horse->speed = $horse->speed - (5 - 5 * $slowedPercentage);
+			$horse->speed = $this->getSlowSpeed($horse);
 			$slowSpeedDistance = $slowTime * $horse->speed;
-
-			$this->horseRepository->update($horse->id,['slow_speed' => $horse->speed]);
 
 			return $fullSpeedDistance + $slowSpeedDistance;
 		} else {
@@ -111,13 +108,26 @@ class RaceService
 			$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
 
 			$extraDistance = $race->race_meter - $horse->distance_covered;
-			$extraTime = $extraDistance / $horse->slow_speed;	
+			$extraTime = $extraDistance / $this->getSlowSpeed($horse);
 			$this->horseRepository->update($horse->id,['finished_time' => $race->current_time - $extraTime]);
 
 			if ($horse->position === 1){
 				$this->raceRepository->update($race->id,['best_time' => $race->current_time - $extraTime]);
 			}
 		}
+	}
+
+	/**
+	 * Calculate slow speed
+	 *
+	 * @param array $horse
+	 * @return int
+	 */
+	public function getSlowSpeed($horse){
+		$slowedPercentage = $horse->strength * 8 / 100;
+		$speed = $horse->speed - (5 - 5 * $slowedPercentage);
+
+		return $speed;
 	}
 
 	/**
