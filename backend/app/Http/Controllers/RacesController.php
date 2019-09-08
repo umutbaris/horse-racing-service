@@ -52,7 +52,12 @@ class RacesController extends Controller
 			$request['best_time'] = $this->raceRepository->getBestTime();
 			$race = $this->raceRepository->store($request->all());
 
+			if(count($this->horseRepository->findby('status', 'free')) < 8){
+				return $this->sendError("There is no free horses for starting race. You can buy new horses or wait to finish some races", 500);
+			}
+
 			$horses = $this->raceService->getHorsesRandomly();
+			$race['lastFiveResult'] = $this->raceService->getLastFiveResults();
 			$race->horses()->attach($horses);
 
 			return $this->sendSuccess($race, 201);
@@ -96,7 +101,6 @@ class RacesController extends Controller
 	public function progress()
 	{
 		$races = $this->actives()->getData()->data;
-		$this->raceService->getLastFiveResults();
 		foreach ($races as $race){
 			$this->raceRepository->update($race->id,['current_time' => $race->current_time + 10]);
 			$this->raceService->runToHorses($race);

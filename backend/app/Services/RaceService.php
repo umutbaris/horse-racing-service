@@ -54,7 +54,7 @@ class RaceService
 	/**
 	 * Calculating position according to distance covered and updating position
 	 *
-	 * @param [type] $horses
+	 * @param array $horses
 	 * @return void
 	 */
 	public function determineHorsePosition($horses)
@@ -87,25 +87,32 @@ class RaceService
 			$slowedPercentage = $horse->strength * 8 / 100;
 			$horse->speed = $horse->speed - (5 - 5 * $slowedPercentage);
 			$slowSpeedDistance = $slowTime * $horse->speed;
+
 			$this->horseRepository->update($horse->id,['slow_speed' => $horse->speed]);
 
 			return $fullSpeedDistance + $slowSpeedDistance;
-
 		} else {
 			return $horse->distance_covered = $horse->speed * $currentTime;
 		}
 	}
 
+	/**
+	 * Checking horses to complete race after the best possible
+	 * finished time for the running house. Statuses updated in this method.
+	 *
+	 * @param array $horse
+	 * @param array $race
+	 * @return void
+	 */
 	public function checkIsHorseFinishedRace($horse, $race)
 	{
-		if ($race->current_time >=  $race->race_meter / 10 && $horse->distance_covered >= $race->race_meter && $horse->status === 'run') {
+		if ($race->current_time >= $race->race_meter / 10 && $horse->distance_covered >= $race->race_meter && $horse->status === 'run') {
 			$this->horseRepository->update($horse->id,['distance_covered' => $race->race_meter]);
 			$this->horseRepository->update($horse->id,['status' => 'Completed Race']);
 
 			$extraDistance = $race->race_meter - $horse->distance_covered;
 			$extraTime = $extraDistance / $horse->slow_speed;	
 			$this->horseRepository->update($horse->id,['finished_time' => $race->current_time - $extraTime]);
-			
 
 			if ($horse->position === 1){
 				$this->raceRepository->update($race->id,['best_time' => $race->current_time - $extraTime]);
@@ -113,6 +120,12 @@ class RaceService
 		}
 	}
 
+	/**
+	 * When all horses completed race, race is also finish.
+	 *
+	 * @param array $race
+	 * @return void
+	 */
 	public function checkIsRaceFinished($race)
 	{
 		$statuses = array_column($race->horses, 'status');
@@ -129,22 +142,27 @@ class RaceService
 	}
 
 
+	/**
+	 * Fetch last 5 result and sort top 3 horse
+	 * then return race with top 3 horses info
+	 *
+	 * @return array
+	 */
 	public function getLastFiveResults()
 	{
 		$finishedRaces = $this->raceRepository->findByLastNelements("status", "Finished", 5, ['horses']);
-		$topHorses = [];
+		$results = [];
 
 		foreach($finishedRaces as $finishedRace){
-			$sortedHorses = $finishedRace->horses->sortBy('position');
-			$topThreeHorses = $sortedHorses->slice(0, 3);
+			$topThreeHorses = $finishedRace->horses->slice(0, 3);
 			$lastRaces = [
 				'race' => $finishedRace->id,
 				'topThreeHorses' => $topThreeHorses->sortBy('position')
 			];
 
-			array_push($topHorses, $lastRaces);
+			array_push($results, $lastRaces);
 		}
 
-		return $topHorses;
+		return $results;
 	}
 }
