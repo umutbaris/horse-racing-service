@@ -34,7 +34,7 @@ Implementig a horse racing simulator with PHP and a relational database.
 
 ## Hints
 
-There are 4 important folders whiche have include implementations in application layer
+There are 4 important folders which have include implementations in application layer
 * Http Requests
 
   `backend/app/Http/Requests`
@@ -55,6 +55,26 @@ There are 4 important folders whiche have include implementations in application
 * Routes 
 
   `backend/routes`
+ 
+ ## Api Endpoints
+
+
+| Method | URL               | 
+| -------|-------------------|
+| GET    | api/all-races/    |
+| GET    | api/horses/{id}   |
+| GET    | api/races/{id}    |
+| GET    | api/all-races/    | 
+| GET    | api/active-races/ | 
+| GET    | api/races/{id}    | 
+|**GET**| **api/progress/**  |  
+| POST   | api/horses/       |
+|**POST**| **api/races/**    |  
+| PUT    | api/horses/       |
+| PUT    | api/races/        |
+| DELETE | api/horses/{id}   |
+| DELETE | api/races/{id}    |
+
 
 There are 3 important folders in database layer under the `backend/database` folder 
 
@@ -64,9 +84,6 @@ There are 3 important folders in database layer under the `backend/database` fol
   
   ## DB Schema
   ![db_schema](https://github.com/umutbariskarasar/horse-racing-service/blob/master/horse-race-schema.png)
-
-
-
 
 
 
