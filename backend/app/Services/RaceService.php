@@ -46,6 +46,7 @@ class RaceService
 			$this->checkIsHorseFinishedRace($horse, $race);
 			$this->checkIsRaceFinished($race);
 		}
+
 		if($race->status === 'ongoing'){
 			$this->determineHorsePosition($horses);
 		}
@@ -89,7 +90,7 @@ class RaceService
 
 			return $fullSpeedDistance + $slowSpeedDistance;
 		} else {
-			return $horse->distance_covered = $horse->speed * $currentTime;
+			return $horse->speed * $currentTime;
 		}
 	}
 
