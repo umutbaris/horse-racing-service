@@ -1,5 +1,5 @@
 # horse-racing-service
-Implementig a horse racing simulator with PHP and a relational database.
+Implementig a horse racing simulator API with PHP and a relational database.
 
 **Technologies used**
 - Docker
